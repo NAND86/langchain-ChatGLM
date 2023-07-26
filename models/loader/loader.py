@@ -137,6 +137,8 @@ class LoaderCheckPoint:
                     if self.device_map is None:
                         if 'chatglm' in model_name.lower():
                             self.device_map = self.chatglm_auto_configure_device_map(num_gpus)
+                        if 'chatglm2' in model_name.lower():    # nand: chatglm2每一层的名字发生了变化
+                            self.device_map = self.chatglm2_auto_configure_device_map(num_gpus)
                         elif 'moss' in model_name.lower():
                             self.device_map = self.moss_auto_configure_device_map(num_gpus, model_name)
                         else:
@@ -269,6 +271,35 @@ class LoaderCheckPoint:
                 used = 0
             assert gpu_target < num_gpus
             device_map[f'{layer_prefix}.layers.{i}'] = gpu_target
+            used += 1
+
+        return device_map
+
+    def chatglm2_auto_configure_device_map(self, num_gpus: int) -> Dict[str, int]:
+        num_trans_layers = 28
+        per_gpu_layers = 30 / num_gpus
+
+        # bugfix: PEFT加载lora模型出现的层命名不同
+        if self.lora:
+            layer_prefix = 'base_model.model.transformer'
+        else:
+            layer_prefix = 'transformer'
+
+        device_map = {
+            f'{layer_prefix}.embedding.word_embeddings': 0,
+            f'{layer_prefix}.encoder.final_layernorm': 0,
+            f'{layer_prefix}.output_layer': 0,
+            f'{layer_prefix}.rotary_pos_emb': 0,
+        }
+
+        used = 2
+        gpu_target = 0
+        for i in range(num_trans_layers):
+            if used >= per_gpu_layers:
+                gpu_target += 1
+                used = 0
+            assert gpu_target < num_gpus
+            device_map[f'{layer_prefix}.encoder.layers.{i}'] = gpu_target
             used += 1
 
         return device_map

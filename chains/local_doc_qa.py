@@ -77,13 +77,14 @@ def load_file(filepath, sentence_size=SENTENCE_SIZE):
         docs = loader.load()
     else:
         loader = UnstructuredFileLoader(filepath, mode="elements")
+        # loader = UnstructuredFileLoader(filepath, mode="single")    # nand: 这影响什么？ - 每一行作为一个doc还是整体作为一个doc
         textsplitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
         docs = loader.load_and_split(text_splitter=textsplitter)
     write_check_file(filepath, docs)
     return docs
 
 
-def write_check_file(filepath, docs):
+def write_check_file(filepath, docs):    # nand: 这个临时文件的作用是什么
     folder_path = os.path.join(os.path.dirname(filepath), "tmp_files")
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -190,6 +191,7 @@ class LocalDocQA:
                     vs_path = os.path.join(KB_ROOT_PATH,
                                            f"""{"".join(lazy_pinyin(os.path.splitext(file)[0]))}_FAISS_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}""",
                                            "vector_store")
+                # nand: MyFAISS没实现from_documents，用的还是父类的
                 vector_store = MyFAISS.from_documents(docs, self.embeddings)  # docs 为Document列表
                 torch_gc()
 
@@ -225,7 +227,7 @@ class LocalDocQA:
         vector_store.chunk_size = self.chunk_size
         vector_store.chunk_conent = self.chunk_conent
         vector_store.score_threshold = self.score_threshold
-        related_docs_with_score = vector_store.similarity_search_with_score(query, k=self.top_k)
+        related_docs_with_score = vector_store.similarity_search_with_score(query, k=self.top_k)    # nand: 匹配从这里开始
         torch_gc()
         if len(related_docs_with_score) > 0:
             prompt = generate_prompt(related_docs_with_score, query)

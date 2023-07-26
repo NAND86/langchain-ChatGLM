@@ -6,10 +6,10 @@ from models.base import (BaseAnswer,
                          AnswerResult)
 
 
-class ChatGLM(BaseAnswer, LLM, ABC):
+class ChatGLM(BaseAnswer, LLM, ABC):    # nand: 参数调整
     max_token: int = 10000
-    temperature: float = 0.01
-    top_p = 0.9
+    temperature: float = 0.001
+    top_p = 0.75
     checkPoint: LoaderCheckPoint = None
     # history = []
     history_len: int = 10

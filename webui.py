@@ -53,8 +53,9 @@ def get_answer(query, vs_path, history, mode, score_threshold=VECTOR_SEARCH_SCOR
         for resp, history in local_doc_qa.get_knowledge_based_answer(
                 query=query, vs_path=vs_path, chat_history=history, streaming=streaming):
             source = "\n\n"
+            # nand: 打印距离
             source += "".join(
-                [f"""<details> <summary>出处 [{i + 1}] {os.path.split(doc.metadata["source"])[-1]}</summary>\n"""
+                [f"""<details> <summary>出处 [{i + 1}] [距离: {doc.metadata["score"]:.2f}] {os.path.split(doc.metadata["source"])[-1]}</summary>\n"""
                  f"""{doc.page_content}\n"""
                  f"""</details>"""
                  for i, doc in
